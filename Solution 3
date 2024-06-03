@@ -1,0 +1,41 @@
+Solution 3:
+
+“package main
+import "fmt"
+
+func main() {
+    cnp := make(chan func(), 10)
+    for i := 0; i < 4; i++ {
+        go func() {
+            for f := range cnp {
+                f()
+            }
+        }()
+    }
+    cnp <- func() {
+        fmt.Println("HERE1")
+    }
+    fmt.Println("Hello")
+}
+“
+
+1. make(chan func(), 10)
+This statement creates a buffered channel capable of holding 10 elements type func() allowing up to 10 tasks to be queued up without blocking the sender.
+This can be used to manage a queue of tasks to be executed by worker goroutines. Each function represents a task to be processed.
+
+2. For Loop with Goroutines
+  - The for loop starts 4 goroutines. Each goroutine runs an infinite loop (`for f := range cnp { ... }`), which continuously waits for functions to arrive on the channel and executes them.
+  - This setup effectively creates a pool of 4 worker goroutines that process tasks concurrently.
+
+4. Channel Send Operation (`cnp <- func() { ... }`):
+   -	 This sends a function that prints "HERE1" to the channel .
+   - 	 One of the 4 worker goroutines will eventually pick up this function and execute it.
+
+
+5 . fmt.Println("Hello") prints "Hello" to the standard output. This happens immediately after the function is sent to the channel.
+
+
+—------------------------------Reason of "HERE1" Not Getting Printed—------------------------------
+
+Timing and Concurrency Issue:
+  - The main function does not wait for the worker goroutines to pick up and execute the function from the channel before it exits. Since `fmt.Println("Hello")` and the `cnp <- func() { fmt.Println("HERE1") }` execute almost instantly, the main function might exit before any of the worker goroutines have a chance 
